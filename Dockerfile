@@ -1,3 +1,6 @@
+RUN --mount=type=cache,id=cache-s_f07f034e-2a6f-4d22-b41d-1573aeabcf2f,target=/root/.cache/pip \
+    python3 -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt
+
 # Tahap 1: Gunakan image Python 3.12-slim sebagai base image
 FROM python:3.12-slim
 
