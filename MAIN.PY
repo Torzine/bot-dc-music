@@ -1,43 +1,41 @@
 import discord
-from discord.ext import commands
 import os
-import traceback
 import asyncio
-import os
+import logging
+from discord.ext import commands
 from dotenv import load_dotenv
 
-TOKEN = os.getenv("TOKEN")
-PREFIX = os.getenv("PREFIX")
+# Load token dari .env
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
 
-# Inisialisasi bot dengan intents
+# Logging untuk debugging
+logging.basicConfig(level=logging.INFO)
+
+# Intents bot
 intents = discord.Intents.default()
 intents.message_content = True
-intents.voice_states = True
-bot = commands.Bot
+intents.voice_states = True  # Diperlukan untuk voice
 
-# Event ketika bot siap digunakan
+# Inisialisasi bot
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Memuat semua cogs
+COGS = ["cogs.music", "cogs.controls", "cogs.queue", "cogs.events"]
+
 @bot.event
 async def on_ready():
-    print(f"✅ Bot {bot.user} siap digunakan!")
+    print(f"✅ {bot.user} telah online!")
 
-# Fungsi untuk memuat semua cogs
 async def load_cogs():
-    print("📂 Loading Cogs...")
-    for filename in os.listdir("./cogs"):
-        if filename.endswith(".py"):
-            try:
-                await bot.load_extension(f"cogs.{filename[:-3]}")
-                print(f"✅ Loaded {filename}")
-            except Exception as e:
-                print(f"❌ Gagal memuat {filename}: {e}")
-                traceback.print_exc()
-    print("📂 Semua Cogs telah dimuat!")
+    for cog in COGS:
+        await bot.load_extension(cog)
+        print(f"🔄 Loaded: {cog}")
 
 # Menjalankan bot
 async def main():
     async with bot:
         await load_cogs()
         await bot.start(TOKEN)
-
 
 asyncio.run(main())
