@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy requirements terlebih dahulu untuk caching
 COPY requirements.txt /app/
 
+# Install dependensi sistem yang dibutuhkan
+RUN apt update && apt install -y ffmpeg
+
 # Buat virtual environment & install dependencies sebelum COPY semua file
 RUN python3 -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
