@@ -4,6 +4,7 @@ import os
 import traceback
 import asyncio
 import os
+from dotenv import load_dotenv
 
 TOKEN = os.getenv("TOKEN")
 PREFIX = os.getenv("PREFIX")
