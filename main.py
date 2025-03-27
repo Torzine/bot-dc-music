@@ -28,7 +28,7 @@ async def on_ready():
 async def load_cogs():
     """Memuat semua cogs secara otomatis dari folder 'cogs'"""
     print("📂 Loading Cogs...")
-    
+
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py"):
             cog_name = f"cogs.{filename[:-3]}"  # Menghapus ".py" dari nama file
@@ -38,13 +38,14 @@ async def load_cogs():
                 print(f"✅ Loaded {cog_name}")
             except Exception as e:
                 print(f"❌ Gagal memuat {cog_name}: {e}")
-                traceback.print_exc()
-    
+                traceback.print_exc()  # Menampilkan error lengkap
+
     print("📂 Semua Cogs telah dimuat!")
 
 async def main():
     async with bot:
-        await load_cogs()
+        await load_cogs()  # ✅ Pastikan ini dijalankan sebelum bot start
+        print("🚀 Bot akan segera online...")
         await bot.start(TOKEN)
 
 asyncio.run(main())
