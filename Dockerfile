@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt /app/
 
 # Buat virtual environment & install dependencies sebelum COPY semua file
-RUN python3 -m venv /opt/venv && \
+RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # Salin seluruh isi proyek ke dalam container
