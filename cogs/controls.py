@@ -36,7 +36,6 @@ class Controls(commands.Cog):
             music_cog.autoplay_enabled[guild_id] = True
             await ctx.send("✅ Autoplay diaktifkan!")
 
-
 # Setup cog
 async def setup(bot):
     await bot.add_cog(Controls(bot)) 

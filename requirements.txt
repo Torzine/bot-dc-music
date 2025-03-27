@@ -1,6 +1,6 @@
 discord.py
 yt-dlp
 ffmpeg
-python-dotenv  # Jika pakai file .env
+python-dotenv
 aiohttp
 async-timeout
