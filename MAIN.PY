@@ -2,8 +2,12 @@ import discord
 from discord.ext import commands
 import os
 import traceback
-from config import TOKEN, PREFIX
 import asyncio
+import os
+
+TOKEN = os.getenv("TOKEN")
+PREFIX = os.getenv("PREFIX")
+
 # Inisialisasi bot dengan intents
 intents = discord.Intents.default()
 intents.message_content = True
