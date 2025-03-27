@@ -25,6 +25,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"✅ Bot {bot.user} siap digunakan!")
 
+import traceback
+
 async def load_cogs():
     """Memuat semua cogs secara otomatis dari folder 'cogs'"""
     print("📂 Loading Cogs...")
@@ -38,9 +40,10 @@ async def load_cogs():
                 print(f"✅ Loaded {cog_name}")
             except Exception as e:
                 print(f"❌ Gagal memuat {cog_name}: {e}")
-                traceback.print_exc()  # Menampilkan error lengkap
+                traceback.print_exc()  # Debugging error lebih jelas
 
     print("📂 Semua Cogs telah dimuat!")
+
 
 async def main():
     async with bot:
