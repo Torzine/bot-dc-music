@@ -1,6 +1,5 @@
 discord.py
 yt-dlp
-ffmpeg
 python-dotenv
 async-timeout
 aiohttp
