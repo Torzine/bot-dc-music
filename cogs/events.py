@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import os
-import datetime
+from datetime import datetime
 
 LOG_FILE = "log.json"
 
@@ -15,21 +15,21 @@ class Events(commands.Cog):
         """Membuat file log jika belum ada atau rusak"""
         try:
             if not os.path.exists(LOG_FILE):
-                with open(LOG_FILE, "w") as f:
-                    json.dump([], f)
+                with open(LOG_FILE, "w", encoding="utf-8") as f:
+                    json.dump([], f, indent=4)
             else:
-                with open(LOG_FILE, "r") as f:
+                with open(LOG_FILE, "r", encoding="utf-8") as f:
                     logs = json.load(f)
                     if not isinstance(logs, list):  # Jika bukan list, reset ke list kosong
                         raise ValueError("Invalid log format")
         except (json.JSONDecodeError, ValueError):
-            with open(LOG_FILE, "w") as f:
-                json.dump([], f)
+            with open(LOG_FILE, "w", encoding="utf-8") as f:
+                json.dump([], f, indent=4)
 
     def log_event(self, event_type, details):
         """Menyimpan log ke dalam log.json dengan error handling"""
         try:
-            with open(LOG_FILE, "r") as f:
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
                 logs = json.load(f)
                 if not isinstance(logs, list):  # Pastikan formatnya list
                     logs = []
@@ -37,12 +37,12 @@ class Events(commands.Cog):
             logs = []
 
         logs.append({
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),  # Format lebih rapi
             "event": event_type,
             "details": details
         })
 
-        with open(LOG_FILE, "w") as f:
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
             json.dump(logs, f, indent=4)
 
     @commands.Cog.listener()
@@ -63,3 +63,4 @@ class Events(commands.Cog):
 # Setup cog
 async def setup(bot):
     await bot.add_cog(Events(bot))
+
