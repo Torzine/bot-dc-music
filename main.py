@@ -2,6 +2,7 @@ import discord
 import os
 import asyncio
 import logging
+import traceback
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -20,19 +21,27 @@ intents.voice_states = True  # Diperlukan untuk voice
 # Inisialisasi bot
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Memuat semua cogs
-COGS = ["cogs.music", "cogs.controls", "cogs.queue", "cogs.events"]
-
 @bot.event
 async def on_ready():
-    print(f"✅ {bot.user} telah online!")
+    print(f"✅ Bot {bot.user} siap digunakan!")
 
 async def load_cogs():
-    for cog in COGS:
-        await bot.load_extension(cog)
-        print(f"🔄 Loaded: {cog}")
+    """Memuat semua cogs secara otomatis dari folder 'cogs'"""
+    print("📂 Loading Cogs...")
+    
+    for filename in os.listdir("./cogs"):
+        if filename.endswith(".py"):
+            cog_name = f"cogs.{filename[:-3]}"  # Menghapus ".py" dari nama file
+            
+            try:
+                await bot.load_extension(cog_name)
+                print(f"✅ Loaded {cog_name}")
+            except Exception as e:
+                print(f"❌ Gagal memuat {cog_name}: {e}")
+                traceback.print_exc()
+    
+    print("📂 Semua Cogs telah dimuat!")
 
-# Menjalankan bot
 async def main():
     async with bot:
         await load_cogs()
