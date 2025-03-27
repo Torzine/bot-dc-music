@@ -2,7 +2,6 @@ import discord
 import os
 import asyncio
 import logging
-import traceback
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -25,41 +24,21 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"✅ Bot {bot.user} siap digunakan!")
 
-import traceback
-
 async def load_cogs():
-    """Memuat semua cogs secara otomatis dari folder 'cogs'"""
+    """Memuat semua cogs yang ada di folder /cogs"""
     print("📂 Loading Cogs...")
     for filename in os.listdir("./cogs"):
-        if filename.endswith(".py"):
-            cog_name = f"cogs.{filename[:-3]}"  # Menghapus ".py" dari nama file
+        if filename.endswith(".py") and filename != "__init__.py":
             try:
-                await bot.load_extension(cog_name)
-                print(f"✅ Loaded: {cog_name}")
+                await bot.load_extension(f"cogs.{filename[:-3]}")
+                print(f"✅ Loaded: {filename}")
             except Exception as e:
-                print(f"❌ Gagal memuat {cog_name}: {e}")
-    print("📂 Semua Cogs telah dimuat!")
-    """Memuat semua cogs secara otomatis dari folder 'cogs'"""
-    print("📂 Loading Cogs...")
-
-    for filename in os.listdir("./cogs"):
-        if filename.endswith(".py"):
-            cog_name = f"cogs.{filename[:-3]}"  # Menghapus ".py" dari nama file
-            
-            try:
-                await bot.load_extension(cog_name)
-                print(f"✅ Loaded {cog_name}")
-            except Exception as e:
-                print(f"❌ Gagal memuat {cog_name}: {e}")
-                traceback.print_exc()  # Debugging error lebih jelas
-
-    print("📂 Semua Cogs telah dimuat!")
-
+                print(f"❌ Gagal memuat {filename}: {e}")
 
 async def main():
     async with bot:
-        await load_cogs()  # ✅ Pastikan ini dijalankan sebelum bot start
-        print("🚀 Bot akan segera online...")
+        await load_cogs()
         await bot.start(TOKEN)
 
+# Jalankan bot
 asyncio.run(main())
