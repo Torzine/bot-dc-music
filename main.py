@@ -30,6 +30,17 @@ import traceback
 async def load_cogs():
     """Memuat semua cogs secara otomatis dari folder 'cogs'"""
     print("📂 Loading Cogs...")
+    for filename in os.listdir("./cogs"):
+        if filename.endswith(".py"):
+            cog_name = f"cogs.{filename[:-3]}"  # Menghapus ".py" dari nama file
+            try:
+                await bot.load_extension(cog_name)
+                print(f"✅ Loaded: {cog_name}")
+            except Exception as e:
+                print(f"❌ Gagal memuat {cog_name}: {e}")
+    print("📂 Semua Cogs telah dimuat!")
+    """Memuat semua cogs secara otomatis dari folder 'cogs'"""
+    print("📂 Loading Cogs...")
 
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py"):
