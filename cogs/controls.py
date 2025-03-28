@@ -16,7 +16,12 @@ class Controls(commands.Cog):
             return
 
         random.shuffle(music_cog.queue[guild_id])
-        await ctx.send("🔀 Antrian lagu telah diacak!")
+        embed = discord.Embed(
+            title="🔀 Antrian Lagu Diacak",
+            description="Lagu dalam antrian telah diacak secara acak!",
+            color=discord.Color.blue(),
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(name="autoplay", help="Mengaktifkan/menonaktifkan autoplay")
     async def autoplay(self, ctx):
@@ -27,15 +32,21 @@ class Controls(commands.Cog):
             await ctx.send("❌ Fitur musik tidak tersedia!")
             return
 
-        if hasattr(music_cog, "autoplay_enabled") and music_cog.autoplay_enabled.get(guild_id, False):
-            music_cog.autoplay_enabled[guild_id] = False
-            await ctx.send("⛔ Autoplay dinonaktifkan!")
-        else:
-            if not hasattr(music_cog, "autoplay_enabled"):
-                music_cog.autoplay_enabled = {}
-            music_cog.autoplay_enabled[guild_id] = True
-            await ctx.send("✅ Autoplay diaktifkan!")
+        # Pastikan atribut autoplay ada di Music cog
+        if not hasattr(music_cog, "autoplay_enabled"):
+            music_cog.autoplay_enabled = {}
+
+        # Toggle autoplay
+        music_cog.autoplay_enabled[guild_id] = not music_cog.autoplay_enabled.get(guild_id, False)
+        status = "✅ **Aktif**" if music_cog.autoplay_enabled[guild_id] else "⛔ **Nonaktif**"
+
+        embed = discord.Embed(
+            title="🔄 Autoplay",
+            description=f"Autoplay telah diubah menjadi {status}",
+            color=discord.Color.green() if music_cog.autoplay_enabled[guild_id] else discord.Color.red(),
+        )
+        await ctx.send(embed=embed)
 
 # Setup cog
 async def setup(bot):
-    await bot.add_cog(Controls(bot)) 
+    await bot.add_cog(Controls(bot))
