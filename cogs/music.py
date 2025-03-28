@@ -4,8 +4,6 @@ import yt_dlp
 import asyncio
 import re
 import os
-import random
-import requests
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")  # Ambil API Key dari Environment
 
@@ -29,38 +27,36 @@ class Music(commands.Cog):
         return self.voice_clients[ctx.guild.id]
 
     @commands.command(name="play", help="Memutar lagu dari YouTube")
-@commands.command(name="play", help="Memutar lagu dari YouTube")
-async def play(self, ctx, *, query):
-    """Memainkan lagu berdasarkan URL atau pencarian, atau menambahkannya ke antrian jika musik sedang diputar."""
-    voice_client = await self.join_voice(ctx)
-    if not voice_client:
-        return
+    async def play(self, ctx, *, query):
+        """Memainkan lagu berdasarkan URL atau pencarian, atau menambahkannya ke antrian jika musik sedang diputar."""
+        voice_client = await self.join_voice(ctx)
+        if not voice_client:
+            return
 
-    url, title, video_id = await self.get_youtube_url(query)
-    if not url:
-        await ctx.send("❌ Lagu tidak ditemukan!")
-        return
+        url, title, video_id = await self.get_youtube_url(query)
+        if not url:
+            await ctx.send("❌ Lagu tidak ditemukan!")
+            return
 
-    # Pastikan server memiliki daftar antrian
-    if ctx.guild.id not in self.queue:
-        self.queue[ctx.guild.id] = []
+        # Pastikan server memiliki daftar antrian
+        if ctx.guild.id not in self.queue:
+            self.queue[ctx.guild.id] = []
 
-    # Tambahkan lagu ke antrian
-    self.queue[ctx.guild.id].append((title, url, video_id))
+        # Tambahkan lagu ke antrian
+        self.queue[ctx.guild.id].append((title, url, video_id))
 
-    if voice_client.is_playing():
-        # Jika sedang memutar musik, tambahkan lagu ke antrian
-        embed = discord.Embed(
-            title="➕ Lagu Ditambahkan ke Antrian",
-            description=f"[{title}]({url})",
-            color=discord.Color.green(),
-        )
-        embed.set_footer(text=f"🎶 Total antrian: {len(self.queue[ctx.guild.id])} lagu")
-        await ctx.send(embed=embed)
-    else:
-        # Jika tidak sedang memutar, mainkan lagu sekarang
-        await self.play_next(ctx)
-
+        if voice_client.is_playing():
+            # Jika sedang memutar musik, tambahkan lagu ke antrian
+            embed = discord.Embed(
+                title="➕ Lagu Ditambahkan ke Antrian",
+                description=f"[{title}]({url})",
+                color=discord.Color.green(),
+            )
+            embed.set_footer(text=f"🎶 Total antrian: {len(self.queue[ctx.guild.id])} lagu")
+            await ctx.send(embed=embed)
+        else:
+            # Jika tidak sedang memutar, mainkan lagu sekarang
+            await self.play_next(ctx)
 
     async def get_youtube_url(self, query):
         """Menggunakan yt-dlp untuk mendapatkan URL audio dan judul lagu."""
