@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import random
+import asyncio
 
 class Controls(commands.Cog):
     def __init__(self, bot):
@@ -8,52 +9,79 @@ class Controls(commands.Cog):
 
     @commands.command(name="shuffle", help="Mengacak urutan lagu dalam antrian")
     async def shuffle(self, ctx):
-        """Mengacak antrian lagu jika terdapat lebih dari 1 lagu dalam antrian."""
+        """Mengacak lagu dalam antrian."""
         guild_id = ctx.guild.id
-        music_cog = self.bot.get_cog("Music")  # Mengambil instance dari cog Music
+        music_cog = self.bot.get_cog("Music")
 
-        # Cek apakah fitur musik tersedia dan ada cukup lagu dalam antrian
         if not music_cog or guild_id not in music_cog.queue or len(music_cog.queue[guild_id]) < 2:
             await ctx.send("❌ Tidak cukup lagu dalam antrian untuk diacak!")
             return
 
-        # Mengacak antrian lagu
         random.shuffle(music_cog.queue[guild_id])
-
-        # Mengirim notifikasi bahwa antrian telah diacak
-        embed = discord.Embed(
-            title="🔀 Antrian Lagu Diacak",
-            description="Lagu dalam antrian telah diacak!",
-            color=discord.Color.blue(),
-        )
-        await ctx.send(embed=embed)
+        await ctx.send("🔀 Lagu dalam antrian telah diacak!")
 
     @commands.command(name="autoplay", help="Mengaktifkan/menonaktifkan autoplay")
     async def autoplay(self, ctx):
-        """Mengaktifkan atau menonaktifkan fitur autoplay untuk server ini."""
+        """Mengaktifkan atau menonaktifkan autoplay di server."""
+        music_cog = self.bot.get_cog("Music")
         guild_id = ctx.guild.id
-        music_cog = self.bot.get_cog("Music")  # Mengambil instance dari cog Music
 
         if not music_cog:
-            await ctx.send("❌ Fitur musik tidak tersedia!")
+            await ctx.send("⚠️ Musik belum diinisialisasi.")
             return
 
-        # Pastikan variabel autoplay ada
-        if not hasattr(music_cog, "autoplay_enabled"):
-            music_cog.autoplay_enabled = {}
-
-        # Toggle autoplay (aktif/nonaktif)
+        # Toggle autoplay
         music_cog.autoplay_enabled[guild_id] = not music_cog.autoplay_enabled.get(guild_id, False)
-        status = "✅ **Aktif**" if music_cog.autoplay_enabled[guild_id] else "⛔ **Nonaktif**"
+        status = "Aktif ✅" if music_cog.autoplay_enabled[guild_id] else "Nonaktif ⛔"
+        await ctx.send(f"🔄 Autoplay: **{status}**")
 
-        # Mengirim notifikasi status autoplay
-        embed = discord.Embed(
-            title="🔄 Autoplay",
-            description=f"Autoplay telah diubah menjadi {status}",
-            color=discord.Color.green() if music_cog.autoplay_enabled[guild_id] else discord.Color.red(),
-        )
-        await ctx.send(embed=embed)
+    @commands.command(name="skip", help="Melewati lagu saat ini")
+    async def skip(self, ctx):
+        """Melewati lagu saat ini dan memainkan lagu berikutnya."""
+        guild_id = ctx.guild.id
+        music_cog = self.bot.get_cog("Music")
 
-# Setup cog agar bisa dimuat ke dalam bot
+        if not music_cog or guild_id not in music_cog.voice_clients:
+            await ctx.send("❌ Bot tidak terhubung ke voice channel!")
+            return
+
+        voice_client = music_cog.voice_clients[guild_id]
+
+        if not voice_client.is_playing():
+            await ctx.send("❌ Tidak ada lagu yang sedang diputar.")
+            return
+
+        await ctx.send("⏭️ Melewati lagu...")
+        voice_client.stop()  # Menghentikan lagu saat ini
+
+        # Panggil fungsi untuk memainkan lagu berikutnya
+        await music_cog.check_next(ctx)
+
+    @commands.command(name="check_api", help="Cek apakah API YouTube aktif dan bisa memberikan rekomendasi lagu")
+    async def check_api(self, ctx):
+        """Cek apakah API YouTube bisa memberikan rekomendasi lagu."""
+        music_cog = self.bot.get_cog("Music")
+        if not music_cog:
+            await ctx.send("⚠️ Musik belum diinisialisasi.")
+            return
+
+        guild_id = ctx.guild.id
+        if guild_id not in music_cog.last_video_id:
+            await ctx.send("⚠️ Tidak ada lagu terakhir untuk mendapatkan rekomendasi.")
+            return
+
+        video_id = music_cog.last_video_id[guild_id]
+        url, title, new_video_id = await music_cog.get_recommended_video(video_id)
+
+        if url:
+            embed = discord.Embed(
+                title="✅ API YouTube Berfungsi",
+                description=f"🎶 Rekomendasi lagu ditemukan:\n**[{title}]({url})**",
+                color=discord.Color.green(),
+            )
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("❌ API YouTube tidak dapat memberikan rekomendasi lagu!")
+
 async def setup(bot):
     await bot.add_cog(Controls(bot))
