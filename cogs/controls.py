@@ -18,7 +18,7 @@ class Controls(commands.Cog):
         random.shuffle(music_cog.queue[guild_id])
         embed = discord.Embed(
             title="🔀 Antrian Lagu Diacak",
-            description="Lagu dalam antrian telah diacak secara acak!",
+            description="Lagu dalam antrian telah diacak!",
             color=discord.Color.blue(),
         )
         await ctx.send(embed=embed)
@@ -32,11 +32,10 @@ class Controls(commands.Cog):
             await ctx.send("❌ Fitur musik tidak tersedia!")
             return
 
-        # Pastikan atribut autoplay ada di Music cog
+        # Toggle autoplay
         if not hasattr(music_cog, "autoplay_enabled"):
             music_cog.autoplay_enabled = {}
 
-        # Toggle autoplay
         music_cog.autoplay_enabled[guild_id] = not music_cog.autoplay_enabled.get(guild_id, False)
         status = "✅ **Aktif**" if music_cog.autoplay_enabled[guild_id] else "⛔ **Nonaktif**"
 
