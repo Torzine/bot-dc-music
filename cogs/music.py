@@ -4,6 +4,7 @@ import yt_dlp
 import asyncio
 import re
 import os
+import aiohttp
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")  # Ambil API Key dari Environment
 
@@ -125,6 +126,36 @@ class Music(commands.Cog):
                 await self.voice_clients[guild_id].disconnect()
                 del self.voice_clients[guild_id]
                 print("✅ Bot keluar dari voice channel karena antrian kosong.")
+
+
+    async def get_recommended_video(self, video_id):
+        """Mengambil video rekomendasi dari YouTube API."""
+        url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={video_id}&type=video&key={YOUTUBE_API_KEY}"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                data = await response.json()
+                if "items" in data and data["items"]:
+                    first_result = data["items"][0]
+                    video_id = first_result["id"]["videoId"]
+                    title = first_result["snippet"]["title"]
+                    return f"https://www.youtube.com/watch?v={video_id}", title, video_id
+                return None, None, None
+
+async def autoplay_next(self, ctx):
+    """Memutar lagu berikutnya berdasarkan rekomendasi YouTube."""
+    guild_id = ctx.guild.id
+    if guild_id in self.last_video_id:
+        url, title, video_id = await self.get_recommended_video(self.last_video_id[guild_id])
+        if url:
+            self.queue[guild_id] = [(title, url, video_id)]
+            await self.play_next(ctx)
+        else:
+            await ctx.send("❌ Tidak dapat menemukan lagu autoplay!")
+    else:
+        await ctx.send("⚠️ Tidak ada lagu sebelumnya untuk mendapatkan rekomendasi.")
+
+
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
