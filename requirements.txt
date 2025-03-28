@@ -4,4 +4,4 @@ python-dotenv
 async-timeout
 aiohttp
 PyNaCl
-
+requests
