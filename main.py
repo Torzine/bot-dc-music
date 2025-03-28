@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load token dari .env
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+
 
 # Logging untuk debugging
 logging.basicConfig(level=logging.INFO)
