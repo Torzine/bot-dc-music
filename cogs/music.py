@@ -106,39 +106,18 @@ class Music(commands.Cog):
             await self.play_next(ctx)
         elif self.autoplay_enabled.get(guild_id, False):
             await self.autoplay_next(ctx)
+        else:
+            await self.leave_if_empty(ctx)
 
-    async def autoplay_next(self, ctx):
-        """Memainkan lagu berikutnya berdasarkan rekomendasi YouTube API."""
+    async def leave_if_empty(self, ctx):
+        """Keluar dari voice channel jika tidak ada lagu yang tersisa."""
         guild_id = ctx.guild.id
-        last_video_id = self.last_video_id.get(guild_id)
-
-        if not last_video_id:
-            return
-
-        title, url, video_id = await self.get_youtube_suggestion(last_video_id)
-        if title:
-            self.queue[guild_id] = [(title, url, video_id)]
-            await self.play_next(ctx)
-
-    async def get_youtube_suggestion(self, last_video_id):
-        """Mengambil rekomendasi lagu dari YouTube API berdasarkan lagu terakhir."""
-        url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={last_video_id}&type=video&key={YOUTUBE_API_KEY}"
-
-        try:
-            response = requests.get(url)
-            data = response.json()
-
-            if "items" in data and len(data["items"]) > 0:
-                suggestion = random.choice(data["items"])
-                video_id = suggestion["id"]["videoId"]
-                title = suggestion["snippet"]["title"]
-                video_url = f"https://www.youtube.com/watch?v={video_id}"
-                return title, video_url, video_id
-            else:
-                return None, None, None
-        except Exception as e:
-            print(f"Error: {e}")
-            return None, None, None
+        if guild_id in self.voice_clients and not self.queue.get(guild_id, []):
+            await asyncio.sleep(10)  # Tunggu 10 detik sebelum keluar
+            if not self.queue.get(guild_id, []) and self.voice_clients[guild_id].is_connected():
+                await self.voice_clients[guild_id].disconnect()
+                del self.voice_clients[guild_id]
+                print("✅ Bot keluar dari voice channel karena antrian kosong.")
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
