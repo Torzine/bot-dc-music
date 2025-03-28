@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import yt_dlp
 import asyncio
+import re  # Tambahkan untuk mendeteksi URL
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -43,11 +44,21 @@ class Music(commands.Cog):
     async def get_youtube_url(self, query):
         """Menggunakan yt-dlp untuk mendapatkan URL audio dan judul lagu."""
         ydl_opts = {"format": "bestaudio/best", "noplaylist": True, "quiet": True}
+
+        # 🔍 Cek apakah input adalah URL
+        url_pattern = re.compile(r'(https?://)?(www\.)?(youtube\.com|youtu\.?be)/.+')
+        is_url = re.match(url_pattern, query)
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
-                info = ydl.extract_info(f"ytsearch:{query}", download=False)
-                if info["entries"]:
-                    return info["entries"][0]["url"], info["entries"][0]["title"]
+                if is_url:  # Jika input adalah URL langsung
+                    info = ydl.extract_info(query, download=False)
+                else:  # Jika input adalah kata kunci pencarian
+                    info = ydl.extract_info(f"ytsearch:{query}", download=False)
+                    info = info["entries"][0] if info["entries"] else None
+
+                if info:
+                    return info["url"], info["title"]
                 else:
                     return None, None
             except Exception as e:
