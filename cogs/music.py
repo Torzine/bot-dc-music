@@ -132,6 +132,18 @@ class Music(commands.Cog):
 
         return None
 
+    async def autoplay_next(self, ctx):
+    """Memainkan lagu berikutnya berdasarkan rekomendasi (misalnya dari YouTube API)."""
+    guild_id = ctx.guild.id
+
+    # Pastikan autoplay diaktifkan dan tidak ada lagu dalam antrian
+    if self.autoplay_enabled.get(guild_id, False) and not self.queue.get(guild_id):
+        next_song = await self.get_youtube_suggestion()  # Implementasikan fungsi rekomendasi lagu
+        if next_song:
+            self.queue[guild_id] = [next_song]
+            await self.play_next(ctx)
+
+
     async def show_queue(self, ctx):
         guild_id = ctx.guild.id
         if guild_id not in self.queue or not self.queue[guild_id]:
