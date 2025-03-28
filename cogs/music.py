@@ -6,18 +6,18 @@ import re
 import os
 import aiohttp
 
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")  # Ambil API Key dari Environment
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")  # Mengambil API Key dari Environment Variables
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.voice_clients = {}  # Menyimpan voice client per server
-        self.queue = {}  # Antrian lagu tiap server
-        self.autoplay_enabled = {}  # Status autoplay tiap server
-        self.last_video_id = {}  # Menyimpan ID video terakhir tiap server
+        self.queue = {}  # Menyimpan antrian lagu tiap server
+        self.autoplay_enabled = {}  # Menyimpan status autoplay tiap server
+        self.last_video_id = {}  # Menyimpan ID video terakhir yang diputar di tiap server
 
     async def join_voice(self, ctx):
-        """Bergabung ke voice channel pengguna atau kembali jika terputus."""
+        """Bergabung ke voice channel pengguna atau kembali jika sudah terhubung."""
         if ctx.author.voice is None or ctx.author.voice.channel is None:
             await ctx.send("❌ Kamu harus bergabung ke voice channel dulu!")
             return None
@@ -29,7 +29,7 @@ class Music(commands.Cog):
 
     @commands.command(name="play", help="Memutar lagu dari YouTube")
     async def play(self, ctx, *, query):
-        """Memainkan lagu berdasarkan URL atau pencarian, atau menambahkannya ke antrian jika musik sedang diputar."""
+        """Mencari dan memutar lagu berdasarkan URL atau pencarian."""
         voice_client = await self.join_voice(ctx)
         if not voice_client:
             return
@@ -39,15 +39,13 @@ class Music(commands.Cog):
             await ctx.send("❌ Lagu tidak ditemukan!")
             return
 
-        # Pastikan server memiliki daftar antrian
+        # Menyimpan lagu ke dalam antrian
         if ctx.guild.id not in self.queue:
             self.queue[ctx.guild.id] = []
-
-        # Tambahkan lagu ke antrian
         self.queue[ctx.guild.id].append((title, url, video_id))
 
+        # Jika sedang memutar, tambahkan ke antrian; jika tidak, langsung mainkan
         if voice_client.is_playing():
-            # Jika sedang memutar musik, tambahkan lagu ke antrian
             embed = discord.Embed(
                 title="➕ Lagu Ditambahkan ke Antrian",
                 description=f"[{title}]({url})",
@@ -56,11 +54,10 @@ class Music(commands.Cog):
             embed.set_footer(text=f"🎶 Total antrian: {len(self.queue[ctx.guild.id])} lagu")
             await ctx.send(embed=embed)
         else:
-            # Jika tidak sedang memutar, mainkan lagu sekarang
             await self.play_next(ctx)
 
     async def get_youtube_url(self, query):
-        """Menggunakan yt-dlp untuk mendapatkan URL audio dan judul lagu."""
+        """Menggunakan yt-dlp untuk mendapatkan URL audio dan judul lagu dari YouTube."""
         ydl_opts = {"format": "bestaudio/best", "noplaylist": True, "quiet": True}
         url_pattern = re.compile(r'(https?://)?(www\.)?(youtube\.com|youtu\.?be)/.+')
         is_url = re.match(url_pattern, query)
@@ -83,7 +80,7 @@ class Music(commands.Cog):
                 return None, None, None
 
     async def play_next(self, ctx):
-        """Memainkan lagu berikutnya di antrian atau menggunakan autoplay."""
+        """Memainkan lagu berikutnya dari antrian atau menggunakan autoplay jika diaktifkan."""
         guild_id = ctx.guild.id
         if guild_id in self.queue and self.queue[guild_id]:
             title, url, video_id = self.queue[guild_id].pop(0)
@@ -127,9 +124,21 @@ class Music(commands.Cog):
                 del self.voice_clients[guild_id]
                 print("✅ Bot keluar dari voice channel karena antrian kosong.")
 
+    async def autoplay_next(self, ctx):
+        """Memainkan lagu berikutnya berdasarkan rekomendasi YouTube."""
+        guild_id = ctx.guild.id
+        if guild_id in self.last_video_id:
+            url, title, video_id = await self.get_recommended_video(self.last_video_id[guild_id])
+            if url:
+                self.queue.setdefault(guild_id, []).append((title, url, video_id))  
+                await self.play_next(ctx)
+            else:
+                await ctx.send("❌ Tidak dapat menemukan lagu autoplay!")
+        else:
+            await ctx.send("⚠️ Tidak ada lagu sebelumnya untuk mendapatkan rekomendasi.")
 
     async def get_recommended_video(self, video_id):
-        """Mengambil video rekomendasi dari YouTube API."""
+        """Mengambil video rekomendasi dari YouTube API berdasarkan lagu terakhir."""
         url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={video_id}&type=video&key={YOUTUBE_API_KEY}"
         
         async with aiohttp.ClientSession() as session:
@@ -141,21 +150,6 @@ class Music(commands.Cog):
                     title = first_result["snippet"]["title"]
                     return f"https://www.youtube.com/watch?v={video_id}", title, video_id
                 return None, None, None
-
-async def autoplay_next(self, ctx):
-    """Memutar lagu berikutnya berdasarkan rekomendasi YouTube."""
-    guild_id = ctx.guild.id
-    if guild_id in self.last_video_id:
-        url, title, video_id = await self.get_recommended_video(self.last_video_id[guild_id])
-        if url:
-            self.queue[guild_id] = [(title, url, video_id)]
-            await self.play_next(ctx)
-        else:
-            await ctx.send("❌ Tidak dapat menemukan lagu autoplay!")
-    else:
-        await ctx.send("⚠️ Tidak ada lagu sebelumnya untuk mendapatkan rekomendasi.")
-
-
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
